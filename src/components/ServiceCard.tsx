@@ -7,19 +7,20 @@ import { cn } from "@/lib/utils";
 interface Service {
   id: string;
   name: string;
-  status: "running" | "stopped" | "starting" | "error";
-  port: number;
-  description: string;
-  autoStart: boolean;
-  processId?: number;
+  status: "running" | "stopped" | "error" | "starting" | "stopping";
+  port?: number;
+  description?: string;
+  auto_start: boolean;
+  process_id?: string;
 }
 
 interface ServiceCardProps {
   service: Service;
-  onAction: (action: "start" | "stop" | "restart") => void;
+  onAction: (serviceId: string, action: "start" | "stop" | "restart") => void;
+  onAutoStartChange: (autoStart: boolean) => void;
 }
 
-export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
+export const ServiceCard = ({ service, onAction, onAutoStartChange }: ServiceCardProps) => {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "running":
@@ -35,6 +36,13 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
           glow: "",
           icon: Activity,
           text: "Starting"
+        };
+      case "stopping":
+        return {
+          color: "bg-warning text-white",
+          glow: "",
+          icon: Square,
+          text: "Stopping"
         };
       case "stopped":
         return {
@@ -77,7 +85,7 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
           )}>
             <StatusIcon className={cn(
               "w-4 h-4",
-              service.status === "starting" && "animate-pulse-glow"
+              (service.status === "starting" || service.status === "stopping") && "animate-pulse-glow"
             )} />
           </div>
           <div>
@@ -95,12 +103,14 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
         <Badge className={statusConfig.color}>
           {statusConfig.text}
         </Badge>
-        <span className="text-xs text-muted-foreground">
-          Port: {service.port}
-        </span>
-        {service.processId && (
+        {service.port && (
           <span className="text-xs text-muted-foreground">
-            PID: {service.processId}
+            Port: {service.port}
+          </span>
+        )}
+        {service.process_id && (
+          <span className="text-xs text-muted-foreground">
+            PID: {service.process_id}
           </span>
         )}
       </div>
@@ -110,7 +120,7 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
         <div className="flex gap-1">
           {service.status === "stopped" || service.status === "error" ? (
             <Button
-              onClick={() => onAction("start")}
+              onClick={() => onAction(service.id, "start")}
               variant="outline"
               size="sm"
               className="h-8"
@@ -121,7 +131,7 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
           ) : service.status === "running" ? (
             <>
               <Button
-                onClick={() => onAction("stop")}
+                onClick={() => onAction(service.id, "stop")}
                 variant="outline"
                 size="sm"
                 className="h-8"
@@ -130,7 +140,7 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
                 Stop
               </Button>
               <Button
-                onClick={() => onAction("restart")}
+                onClick={() => onAction(service.id, "restart")}
                 variant="outline"
                 size="sm"
                 className="h-8"
@@ -146,7 +156,7 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
               disabled
             >
               <Activity className="w-3 h-3 mr-1 animate-spin-slow" />
-              Starting...
+              {service.status === "starting" ? "Starting..." : "Stopping..."}
             </Button>
           )}
         </div>
@@ -155,8 +165,8 @@ export const ServiceCard = ({ service, onAction }: ServiceCardProps) => {
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Auto</span>
           <Switch
-            checked={service.autoStart}
-            onCheckedChange={() => {}}
+            checked={service.auto_start}
+            onCheckedChange={onAutoStartChange}
           />
         </div>
       </div>

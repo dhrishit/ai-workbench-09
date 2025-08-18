@@ -1,102 +1,86 @@
-import { useState } from "react";
 import { ServiceCard } from "./ServiceCard";
-import { Button } from "@/components/ui/button";
+import { Button } from "./ui/button";
 import { Play, Square, RotateCcw } from "lucide-react";
-
-interface Service {
-  id: string;
-  name: string;
-  status: "running" | "stopped" | "starting" | "error";
-  port: number;
-  description: string;
-  autoStart: boolean;
-  processId?: number;
-}
+import { useServices } from "@/hooks/useServices";
+import { useToast } from "@/hooks/use-toast";
 
 export const ServiceDashboard = () => {
-  const [services, setServices] = useState<Service[]>([
-    {
-      id: "ollama",
-      name: "Ollama",
-      status: "running",
-      port: 11434,
-      description: "Local LLM inference server",
-      autoStart: true,
-      processId: 1234,
-    },
-    {
-      id: "comfyui",
-      name: "ComfyUI",
-      status: "stopped",
-      port: 8188,
-      description: "Advanced image generation",
-      autoStart: false,
-    },
-    {
-      id: "whisper",
-      name: "Whisper",
-      status: "running",
-      port: 8889,
-      description: "Speech-to-text transcription",
-      autoStart: true,
-      processId: 5678,
-    },
-    {
-      id: "openwebui",
-      name: "Open WebUI",
-      status: "error",
-      port: 3000,
-      description: "Web interface for AI models",
-      autoStart: false,
-    },
-  ]);
+  const { services, loading, updateServiceStatus, updateServiceAutoStart } = useServices();
+  const { toast } = useToast();
 
-  const handleServiceAction = (serviceId: string, action: "start" | "stop" | "restart") => {
-    setServices(prev => prev.map(service => {
-      if (service.id === serviceId) {
-        if (action === "start") {
-          return { ...service, status: "starting" as const };
-        } else if (action === "stop") {
-          return { ...service, status: "stopped" as const, processId: undefined };
-        } else if (action === "restart") {
-          return { ...service, status: "starting" as const };
-        }
-      }
-      return service;
-    }));
+  const handleServiceAction = async (serviceId: string, action: "start" | "stop" | "restart") => {
+    const service = services.find(s => s.id === serviceId);
+    if (!service) return;
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setServices(prev => prev.map(service => {
-        if (service.id === serviceId) {
-          if (action === "start" || action === "restart") {
-            return { 
-              ...service, 
-              status: "running" as const, 
-              processId: Math.floor(Math.random() * 10000) 
-            };
-          }
-        }
-        return service;
-      }));
-    }, 2000);
+    let newStatus: typeof service.status;
+    let processId: string | undefined;
+
+    // Set intermediate status
+    if (action === "start") {
+      newStatus = "starting";
+    } else if (action === "stop") {
+      newStatus = "stopping";
+    } else {
+      newStatus = "starting"; // restart goes through starting
+    }
+
+    // Update status immediately for UI feedback
+    await updateServiceStatus(serviceId, newStatus);
+
+    // Simulate service management delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Set final status
+    if (action === "start" || action === "restart") {
+      newStatus = "running";
+      processId = Math.random().toString(36).substring(7);
+    } else {
+      newStatus = "stopped";
+      processId = undefined;
+    }
+
+    const result = await updateServiceStatus(serviceId, newStatus, processId);
+    
+    if (result.success) {
+      toast({
+        title: "Success",
+        description: `${service.name} ${action === "start" ? "started" : action === "stop" ? "stopped" : "restarted"} successfully`,
+      });
+    }
   };
 
-  const handleStartAll = () => {
-    services.forEach(service => {
-      if (service.status === "stopped") {
-        handleServiceAction(service.id, "start");
-      }
-    });
+  const handleStartAll = async () => {
+    const stoppedServices = services.filter(s => s.status === "stopped");
+    
+    for (const service of stoppedServices) {
+      await handleServiceAction(service.id, "start");
+      // Small delay between starting services
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
   };
 
-  const handleStopAll = () => {
-    services.forEach(service => {
-      if (service.status === "running") {
-        handleServiceAction(service.id, "stop");
-      }
-    });
+  const handleStopAll = async () => {
+    const runningServices = services.filter(s => s.status === "running");
+    
+    for (const service of runningServices) {
+      await handleServiceAction(service.id, "stop");
+      // Small delay between stopping services
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-8 bg-glass animate-pulse rounded"></div>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-32 bg-glass animate-pulse rounded-lg"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -108,7 +92,7 @@ export const ServiceDashboard = () => {
             onClick={handleStartAll}
             variant="default"
             size="sm"
-            className="flex-1 bg-success hover:bg-success-glow"
+            className="flex-1 bg-success hover:bg-success/90"
           >
             <Play className="w-4 h-4 mr-1" />
             Start All
@@ -135,8 +119,10 @@ export const ServiceDashboard = () => {
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <ServiceCard
+              key={service.id}
               service={service}
-              onAction={(action) => handleServiceAction(service.id, action)}
+              onAction={handleServiceAction}
+              onAutoStartChange={(autoStart) => updateServiceAutoStart(service.id, autoStart)}
             />
           </div>
         ))}
