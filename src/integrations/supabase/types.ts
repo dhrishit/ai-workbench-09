@@ -14,7 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      services: {
+        Row: {
+          auto_start: boolean | null
+          config: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          port: number | null
+          process_id: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          auto_start?: boolean | null
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          port?: number | null
+          process_id?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          auto_start?: boolean | null
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          port?: number | null
+          process_id?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_stats: {
+        Row: {
+          active_connections: number | null
+          cpu_usage: number | null
+          disk_usage: number | null
+          id: string
+          memory_usage: number | null
+          recorded_at: string
+          uptime_seconds: number | null
+        }
+        Insert: {
+          active_connections?: number | null
+          cpu_usage?: number | null
+          disk_usage?: number | null
+          id?: string
+          memory_usage?: number | null
+          recorded_at?: string
+          uptime_seconds?: number | null
+        }
+        Update: {
+          active_connections?: number | null
+          cpu_usage?: number | null
+          disk_usage?: number | null
+          id?: string
+          memory_usage?: number | null
+          recorded_at?: string
+          uptime_seconds?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
