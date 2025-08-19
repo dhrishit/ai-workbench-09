@@ -17,6 +17,8 @@ import {
   Image as ImageIcon 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { comfyUIClient } from "@/lib/apiClients";
+import { useToast } from "@/hooks/use-toast";
 
 interface GeneratedImage {
   id: string;
@@ -38,6 +40,7 @@ export const ImageGenerator = () => {
   const [prompt, setPrompt] = useState("");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
   
   const [settings, setSettings] = useState({
     model: "sdxl-1.0",
@@ -99,7 +102,7 @@ export const ImageGenerator = () => {
     const newImage: GeneratedImage = {
       id: Date.now().toString(),
       prompt,
-      url: "",
+      url: "/placeholder.svg",
       timestamp: new Date(),
       settings: { ...settings },
       status: "generating"
@@ -107,21 +110,39 @@ export const ImageGenerator = () => {
 
     setGeneratedImages(prev => [newImage, ...prev]);
 
-    // Simulate generation process
-    setTimeout(() => {
+    try {
+      const result = await comfyUIClient.generateImage(prompt, settings);
+      
       setGeneratedImages(prev => 
         prev.map(img => 
           img.id === newImage.id 
-            ? { 
-                ...img, 
-                url: `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 100000000)}?w=512&h=512&fit=crop`,
-                status: "completed" as const
-              }
+            ? { ...img, status: "completed" as const, url: result.images[0] || "/placeholder.svg" }
             : img
         )
       );
+      
+      toast({
+        title: "Success",
+        description: "Image generated successfully!",
+      });
+    } catch (error) {
+      console.error('Image generation error:', error);
+      setGeneratedImages(prev => 
+        prev.map(img => 
+          img.id === newImage.id 
+            ? { ...img, status: "error" as const }
+            : img
+        )
+      );
+      
+      toast({
+        title: "Error",
+        description: "Failed to generate image. Please check if ComfyUI is running.",
+        variant: "destructive",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
   };
 
   const handleRandomSeed = () => {

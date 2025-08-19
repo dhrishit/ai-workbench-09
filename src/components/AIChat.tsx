@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Send, Bot, User, Copy, Download, Image, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ollamaClient } from "@/lib/apiClients";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -29,6 +31,7 @@ export const AIChat = () => {
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState("llama3:8b");
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const models = [
     { id: "llama3:8b", name: "Llama 3 8B", type: "text" },
@@ -48,21 +51,39 @@ export const AIChat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      let response = "";
+      
+      // Use Ollama for LLM models
+      if (selectedModel.includes("llama") || selectedModel.includes("mistral") || selectedModel.includes("codellama")) {
+        response = await ollamaClient.generateText(selectedModel, userInput);
+      } else {
+        // Fallback response for other models
+        response = `I understand you're asking about: "${userInput}". This response is from the ${selectedModel} model. For full functionality, please ensure the corresponding AI service is running.`;
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: `I understand you want to know about "${input}". Here's a comprehensive response that would typically come from the ${selectedModel} model. This is a demonstration of how the AI chat interface works with real-time responses, markdown formatting, and model selection.`,
+        content: response,
         timestamp: new Date(),
         model: selectedModel,
       };
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('AI response error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please check if Ollama is running.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const getModelBadgeColor = (type: string) => {

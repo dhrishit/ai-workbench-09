@@ -3,10 +3,12 @@ import { Button } from "./ui/button";
 import { Play, Square, RotateCcw } from "lucide-react";
 import { useServices } from "@/hooks/useServices";
 import { useToast } from "@/hooks/use-toast";
+import { useAPIHealth } from "@/hooks/useAPIHealth";
 
 export const ServiceDashboard = () => {
   const { services, loading, updateServiceStatus, updateServiceAutoStart } = useServices();
   const { toast } = useToast();
+  const { checkAllServices, healthChecking } = useAPIHealth();
 
   const handleServiceAction = async (serviceId: string, action: "start" | "stop" | "restart") => {
     const service = services.find(s => s.id === serviceId);
@@ -105,6 +107,14 @@ export const ServiceDashboard = () => {
           >
             <Square className="w-4 h-4 mr-1" />
             Stop All
+          </Button>
+          <Button
+            onClick={checkAllServices}
+            variant="outline"
+            size="sm"
+            disabled={healthChecking}
+          >
+            <RotateCcw className={`w-4 h-4 ${healthChecking ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>

@@ -17,6 +17,8 @@ import {
   Monitor
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { whisperClient } from "@/lib/apiClients";
+import { useToast } from "@/hooks/use-toast";
 
 interface MediaFile {
   id: string;
@@ -52,7 +54,10 @@ export const MediaCapture = () => {
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcription, setTranscription] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -273,6 +278,58 @@ export const MediaCapture = () => {
                 </Button>
               )}
             </div>
+          </div>
+        </Card>
+
+        {/* Transcription */}
+        <Card className="glass border-glass-border p-4">
+          <h3 className="font-medium text-foreground mb-4">Audio Transcription</h3>
+          <div className="space-y-4">
+            <Button
+              onClick={async () => {
+                setIsTranscribing(true);
+                try {
+                  // Simulate transcription for now - in real app would use actual audio
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  setTranscription("This is a demo transcription. In a real implementation, Whisper would process the actual audio file.");
+                  toast({
+                    title: "Success",
+                    description: "Audio transcribed successfully!",
+                  });
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to transcribe audio.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsTranscribing(false);
+                }
+              }}
+              disabled={isTranscribing || mediaFiles.filter(f => f.type === 'audio').length === 0}
+              className="w-full"
+            >
+              {isTranscribing ? (
+                <>
+                  <Volume2 className="w-4 h-4 mr-2 animate-pulse" />
+                  Transcribing...
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-4 h-4 mr-2" />
+                  Transcribe Latest Audio
+                </>
+              )}
+            </Button>
+            
+            {transcription && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-foreground mb-2">Transcription:</h4>
+                <div className="p-3 bg-muted rounded-lg text-sm">
+                  {transcription}
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
