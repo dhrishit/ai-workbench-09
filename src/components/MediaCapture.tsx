@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { whisperClient } from "@/lib/apiClients";
 import { useToast } from "@/hooks/use-toast";
+import { useAudioRecording } from "@/hooks/useAudioRecording";
 
 interface MediaFile {
   id: string;
@@ -52,12 +53,18 @@ export const MediaCapture = () => {
     }
   ]);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcription, setTranscription] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { 
+    isRecording, 
+    recordingTime, 
+    audioBlob, 
+    startRecording: startAudioRecording, 
+    stopRecording: stopAudioRecording,
+    resetRecording 
+  } = useAudioRecording();
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -132,36 +139,34 @@ export const MediaCapture = () => {
     }
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
-    
-    const interval = setInterval(() => {
-      setRecordingTime(prev => prev + 1);
-    }, 1000);
+  const startRecording = async () => {
+    try {
+      await startAudioRecording();
+    } catch (error) {
+      console.error('Recording failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start recording. Please check microphone permissions.",
+        variant: "destructive",
+      });
+    }
+  };
 
-    // Simulate recording for demo
-    setTimeout(() => {
-      clearInterval(interval);
-      setIsRecording(false);
+  // Add to media files when recording stops
+  useEffect(() => {
+    if (audioBlob && !isRecording) {
       const newFile: MediaFile = {
         id: Date.now().toString(),
         name: `recording_${Date.now()}.wav`,
         type: "audio",
-        url: "",
-        size: recordingTime * 16000, // Approximate size
+        url: URL.createObjectURL(audioBlob),
+        size: audioBlob.size,
         timestamp: new Date(),
         status: "completed"
       };
       setMediaFiles(prev => [newFile, ...prev]);
-      setRecordingTime(0);
-    }, 5000); // Auto-stop after 5 seconds for demo
-  };
-
-  const stopRecording = () => {
-    setIsRecording(false);
-    setRecordingTime(0);
-  };
+    }
+  }, [audioBlob, isRecording]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -269,7 +274,7 @@ export const MediaCapture = () => {
                 </Button>
               ) : (
                 <Button
-                  onClick={stopRecording}
+                  onClick={stopAudioRecording}
                   variant="outline"
                   className="flex-1 bg-error/20 border-error text-error hover:bg-error hover:text-white"
                 >
@@ -287,26 +292,35 @@ export const MediaCapture = () => {
           <div className="space-y-4">
             <Button
               onClick={async () => {
+                if (!audioBlob) {
+                  toast({
+                    title: "No Audio",
+                    description: "Record audio first before transcribing.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
                 setIsTranscribing(true);
                 try {
-                  // Simulate transcription for now - in real app would use actual audio
-                  await new Promise(resolve => setTimeout(resolve, 2000));
-                  setTranscription("This is a demo transcription. In a real implementation, Whisper would process the actual audio file.");
+                  const result = await whisperClient.transcribeAudio(audioBlob);
+                  setTranscription(result);
                   toast({
                     title: "Success",
                     description: "Audio transcribed successfully!",
                   });
                 } catch (error) {
+                  console.error('Transcription error:', error);
                   toast({
                     title: "Error",
-                    description: "Failed to transcribe audio.",
+                    description: "Failed to transcribe audio. Check if Whisper is running.",
                     variant: "destructive",
                   });
                 } finally {
                   setIsTranscribing(false);
                 }
               }}
-              disabled={isTranscribing || mediaFiles.filter(f => f.type === 'audio').length === 0}
+              disabled={isTranscribing || !audioBlob}
               className="w-full"
             >
               {isTranscribing ? (

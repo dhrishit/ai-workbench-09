@@ -164,7 +164,7 @@ export class ComfyUIClient {
 
   async checkStatus(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/system_stats`);
+      const response = await fetch(`${this.baseUrl}/history`);
       return response.ok;
     } catch {
       return false;
@@ -203,7 +203,7 @@ export class WhisperClient {
 
   async checkStatus(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/`);
+      const response = await fetch(`${this.baseUrl}/health`);
       return response.ok;
     } catch {
       return false;
@@ -231,7 +231,7 @@ export class OpenWebUIClient {
 
   async checkStatus(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/health`);
+      const response = await fetch(`${this.baseUrl}/api/config`);
       return response.ok;
     } catch {
       return false;

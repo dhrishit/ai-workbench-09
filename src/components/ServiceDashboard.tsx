@@ -1,4 +1,5 @@
 import { ServiceCard } from "./ServiceCard";
+import { ServiceStatus } from "./ServiceStatus";
 import { Button } from "./ui/button";
 import { Play, Square, RotateCcw } from "lucide-react";
 import { useServices } from "@/hooks/useServices";
@@ -86,6 +87,9 @@ export const ServiceDashboard = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Service Status Overview */}
+      <ServiceStatus />
+      
       {/* Global Controls */}
       <div className="glass p-4 rounded-lg">
         <h2 className="text-lg font-semibold text-foreground mb-4">Service Control</h2>
