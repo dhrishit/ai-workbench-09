@@ -345,9 +345,21 @@ export const ImageGenerator = () => {
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white hover:bg-white/20">
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white hover:bg-white/20">
-                          <Download className="w-4 h-4" />
-                        </Button>
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                           onClick={() => {
+                             const link = document.createElement('a');
+                             link.href = image.url;
+                             link.download = `generated_image_${image.id}.png`;
+                             document.body.appendChild(link);
+                             link.click();
+                             document.body.removeChild(link);
+                           }}
+                         >
+                           <Download className="w-4 h-4" />
+                         </Button>
                       </div>
                     )}
                   </div>

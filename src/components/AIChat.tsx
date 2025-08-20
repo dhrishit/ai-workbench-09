@@ -101,7 +101,25 @@ export const AIChat = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-foreground">AI Chat Interface</h2>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                const chatHistory = messages.map(m => 
+                  `${m.type === 'user' ? 'User' : 'Assistant'} (${m.timestamp.toLocaleTimeString()}): ${m.content}`
+                ).join('\n\n');
+                
+                const blob = new Blob([chatHistory], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `chat_export_${new Date().getTime()}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+              }}
+            >
               <Download className="w-4 h-4 mr-1" />
               Export
             </Button>

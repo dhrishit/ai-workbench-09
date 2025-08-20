@@ -406,9 +406,21 @@ export const MediaCapture = () => {
                             <Play className="w-3 h-3" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" className="h-7 px-2">
-                          <Download className="w-3 h-3" />
-                        </Button>
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="h-7 px-2"
+                           onClick={() => {
+                             const link = document.createElement('a');
+                             link.href = file.url;
+                             link.download = file.name;
+                             document.body.appendChild(link);
+                             link.click();
+                             document.body.removeChild(link);
+                           }}
+                         >
+                           <Download className="w-3 h-3" />
+                         </Button>
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-error hover:text-error">
                           <Trash2 className="w-3 h-3" />
                         </Button>
