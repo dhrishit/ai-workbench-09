@@ -1,100 +1,7 @@
-// API clients for various AI services
+// API clients for various AI services - Improved version
+import { OllamaClient } from './api/index';
 
-export interface OllamaModel {
-  name: string;
-  size: number;
-  digest: string;
-  modified_at: string;
-}
-
-export interface OllamaResponse {
-  model: string;
-  created_at: string;
-  response: string;
-  done: boolean;
-}
-
-export class OllamaClient {
-  private baseUrl: string;
-
-  constructor(baseUrl = 'http://localhost:11434') {
-    this.baseUrl = baseUrl;
-  }
-
-  async listModels(): Promise<OllamaModel[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/tags`);
-      if (!response.ok) throw new Error('Failed to fetch models');
-      const data = await response.json();
-      return data.models || [];
-    } catch (error) {
-      console.error('Ollama API error:', error);
-      return [];
-    }
-  }
-
-  async generateText(model: string, prompt: string, images?: string[]): Promise<string> {
-    try {
-      const requestBody: any = {
-        model,
-        prompt,
-        stream: false
-      };
-
-      // Add images if provided (base64 encoded)
-      if (images && images.length > 0) {
-        requestBody.images = images;
-      }
-
-      const response = await fetch(`${this.baseUrl}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate text');
-      const data: OllamaResponse = await response.json();
-      return data.response;
-    } catch (error) {
-      console.error('Ollama generation error:', error);
-      throw error;
-    }
-  }
-
-  async generateWithImage(model: string, prompt: string, imageFile: File): Promise<string> {
-    try {
-      // Convert image to base64
-      const base64Image = await this.fileToBase64(imageFile);
-      return await this.generateText(model, prompt, [base64Image]);
-    } catch (error) {
-      console.error('Ollama image generation error:', error);
-      throw error;
-    }
-  }
-
-  private async fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove data URL prefix
-        const base64 = result.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  async checkStatus(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/tags`);
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-}
+export type { OllamaModel, OllamaResponse } from './api/ollama';
 
 export class ComfyUIClient {
   private baseUrl: string;
@@ -271,7 +178,7 @@ export class OpenWebUIClient {
   }
 }
 
-// Create singleton instances
+// Create singleton instances - Using improved API clients
 export const ollamaClient = new OllamaClient();
 export const comfyUIClient = new ComfyUIClient();
 export const whisperClient = new WhisperClient();

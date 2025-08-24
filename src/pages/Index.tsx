@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ServiceDashboard } from "@/components/ServiceDashboard";
-import { AIChat } from "@/components/AIChat";
+import { ImprovedAIChat } from "@/components/ImprovedAIChat";
 import { MultimodalChat } from "@/components/MultimodalChat";
 import { ImageGenerator } from "@/components/ImageGenerator";
 import { MediaCapture } from "@/components/MediaCapture";
@@ -60,7 +60,7 @@ const Index = () => {
               </TabsList>
 
               <TabsContent value="chat" className="h-[calc(100%-4rem)]">
-                <AIChat />
+                <ImprovedAIChat />
               </TabsContent>
 
               <TabsContent value="multimodal" className="h-[calc(100%-4rem)]">
