@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { ServiceDashboard } from "@/components/ServiceDashboard";
 import { AIChat } from "@/components/AIChat";
+import { MultimodalChat } from "@/components/MultimodalChat";
 import { ImageGenerator } from "@/components/ImageGenerator";
 import { MediaCapture } from "@/components/MediaCapture";
 import { QuickActions } from "@/components/QuickActions";
 import { StatusBar } from "@/components/StatusBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Image, MessageSquare, Layers } from "lucide-react";
+import { Brain, Image, MessageSquare, Layers, Camera } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("chat");
@@ -42,7 +43,11 @@ const Index = () => {
               <TabsList className="glass mb-6">
                 <TabsTrigger value="chat" className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  AI Chat
+                  Text Chat
+                </TabsTrigger>
+                <TabsTrigger value="multimodal" className="flex items-center gap-2">
+                  <Camera className="w-4 h-4" />
+                  Audio & Images
                 </TabsTrigger>
                 <TabsTrigger value="generate" className="flex items-center gap-2">
                   <Image className="w-4 h-4" />
@@ -56,6 +61,10 @@ const Index = () => {
 
               <TabsContent value="chat" className="h-[calc(100%-4rem)]">
                 <AIChat />
+              </TabsContent>
+
+              <TabsContent value="multimodal" className="h-[calc(100%-4rem)]">
+                <MultimodalChat />
               </TabsContent>
 
               <TabsContent value="generate" className="h-[calc(100%-4rem)]">
